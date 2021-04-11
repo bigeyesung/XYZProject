@@ -1,4 +1,4 @@
-#assuming col size is the same
+#assuming col size is the same?
 #assuming entrace must be on either side?
 from enum import Enum
 
@@ -16,10 +16,10 @@ class Cross():
         for rol in range(rows):
             tmp=[Space.BLOCK.value]*cols
             paths.append(tmp)
-        #assign "O": entrance
+        #assign "empty space"
         for row in range(rows):
             for col in range(cols):
-                #count "O" index for each row
+                #count "empty space index" for each row
                 curRow = cars[row]
                 curInd=0
                 for ind in range(len(curRow)-1):
@@ -30,7 +30,7 @@ class Cross():
         #check corner case if no entrance
         for row in range(1):
             for col in range(1,cols-1):
-                #check either side(col head,col tail) is "O"
+                #check either side(col head,col tail) is "empty"
                 curNum=0
                 if paths[0][col]==Space.EMPTY.value or paths[rows-1][col]==Space.EMPTY.value:
                     for ind in range(rows):
