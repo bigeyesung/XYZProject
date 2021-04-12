@@ -1,10 +1,5 @@
-#conda install pybind11 pybind11-abi pybind11-global
-#pip install sophuspy
-
 import numpy as np
 import sophus as sp
-import unittest
-import pytest
 import matplotlib as mpl
 from mpl_toolkits.mplot3d import Axes3D
 from enum import Enum
@@ -13,18 +8,6 @@ import matplotlib.pyplot as plt
 class LGroup(Enum):
     SO3=2
     SE3=3
-
-# quatNormal(quat)
-# rotMat=rotation_from_quaternion(quat)
-# rotMat2=quaternion_rotation_matrix(quat)
-# rotMat3=from_quaternion(quat)
-# 1. default constructor of SO3
-# quatNormal(quat1)
-# quatNormal(quat2)
-# rotMat1=from_quaternion(quat1)
-# rotMat2=from_quaternion(quat2)
-# a=sp.SE3(rotMat1, trans1)
-# b=sp.SE3(rotMat2, trans2)
 
 class LGHandler():
     def SetSE3(self,trans,quat):
@@ -107,6 +90,7 @@ if __name__=="__main__":
     ori.legend()
 
     lgHandler=LGHandler()
+    #Given providing ranges between a and b
     trans1=np.array([0.4183, -0.4920, 1.6849])
     trans2=np.array([0.4180, -0.4917, 1.6854])
     quat1=[0.5775, -0.8156, 0.0346, -0.0049]
