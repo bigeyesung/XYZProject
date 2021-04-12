@@ -32,16 +32,24 @@ class Trans():
 
     #     return newMat
     def Rotate(self):
+        #given M means rol size and N means column size
+        #Time complexity: O(M*N)
+        #Space complexity: O(M*N)
         oriRols = len(self.mat)
         oriCols = len(self.mat[0])
         revRols = oriRols-1 #reversed rols
+
+        #create transposed matrix
         newMat=[]
         for row in range(oriCols):
             newMat.append([0]*oriRols)
-        #0->1->2->3
-        #start from the last row, and do column-direction iteration
+            
+        #start from the last row, and do reversed column-direction iteration
+        #if original mat is 2 x 3, so we start from 
+        #[1,0]->[0,0]
+        #[1,1]->[0,1]
+        #[1,2]->[0,2]
         for ind in range(oriCols):
-            #2->1->0
             newCol=0
             for revInd in range(revRols,-1,-1):
                 newMat[ind][newCol]=self.mat[revInd][ind]
@@ -49,6 +57,10 @@ class Trans():
         self.mat=newMat
 
     def RotateSquare(self):
+        #given M means rol size and N means column size
+        #Time complexity: O(M*N/4)
+        #Space complexity: O(1)
+        #need more explain !!!!!!!!!!!!!
         n = len(self.mat)
         rows = n//2
         cols = (n+1)//2

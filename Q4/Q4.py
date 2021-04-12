@@ -7,8 +7,12 @@ import unittest
 import pytest
 import matplotlib as mpl
 from mpl_toolkits.mplot3d import Axes3D
+from enum import Enum
 import matplotlib.pyplot as plt
 
+class LGroup(Enum):
+    SO3=2
+    SE3=3
 
 # quatNormal(quat)
 # rotMat=rotation_from_quaternion(quat)
@@ -29,41 +33,47 @@ class LGHandler():
         lieGroup=sp.SE3(rotMat, trans)
         return lieGroup
 
+    def SetSO3(self,quat):
+        self.quatNormal(quat)
+        rotMat=self.from_quaternion(quat)
+        lieGroup=sp.SO3(rotMat)
+        return lieGroup
+
     def quatNormal(self, quat):
         w,x,y,z= quat
         d=(w**2+x**2+y**2+z**2)**0.5
         for ind in range(len(quat)):
             quat[ind]=quat[ind]/d
 
-    def Interpolate(self,a,b):
+    def Interpolate(self, a, b, group):
         #Ref: https://ethaneade.com/lie.pdf page 23
         newx=np.array([])
         newy=np.array([])
         newz=np.array([])
         time=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
         for t in time:
-            a_inv=a.inverse()
-            d=b * a_inv
+            # First consider the group element that takes a to b: b=da
+            d= b * a.inverse()
+            # find the corresponding lie algebra
             log_d=d.log()
+            # Give it a scaler t
             dt=t*log_d
-            back=sp.SE3.exp(dt)
-            mid=back*a
-            newx=np.append(newx,mid.matrix()[0][3])
-            newy=np.append(newy,mid.matrix()[1][3])
-            newz=np.append(newz,mid.matrix()[2][3])
+            # Map back to lie group
+            if group == LGroup.SE3:
+                back=sp.SE3.exp(dt)
+            elif group == LGroup.SO3:
+                back=sp.SO3.exp(dt)
+            #find the interpolated element    
+            element=back*a
+            newx=np.append(newx,element.matrix()[0][group.value])
+            newy=np.append(newy,element.matrix()[1][group.value])
+            newz=np.append(newz,element.matrix()[2][group.value])
         return newx,newy,newz
-    def from_quaternion(self, quat, ordering='wxyz'):
+
+    def from_quaternion(self, quat):
         #Ref: https://github.com/utiasSTARS/liegroups
         #Ref: https://github.com/AndreaCensi/geometry
-        if not np.isclose(np.linalg.norm(quat), 1.):
-            raise ValueError("Quaternion must be unit length")
-        if ordering is 'xyzw':
-            qx, qy, qz, qw = quat
-        elif ordering is 'wxyz':
-            qw, qx, qy, qz = quat
-        else:
-            raise ValueError(
-                "Valid orderings are 'xyzw' and 'wxyz'. Got '{}'.".format(ordering))
+        qw, qx, qy, qz = quat
         # Form the matrix
         qw2 = qw * qw
         qx2 = qx * qx
@@ -86,13 +96,15 @@ class LGHandler():
 if __name__=="__main__":
     mpl.rcParams['legend.fontsize'] = 10
     fig = plt.figure()
+    # fig2 = plt.figure()
+
     #set ori path
-    aori = fig.gca(projection='3d')
+    ori = fig.gca(projection='3d')
     x=np.array([0.4183,  0.4180])
     y=np.array([-0.4920,-0.4917])
     z=np.array([1.6849,  1.6854])
-    aori.plot(x, y, z, label='ori path')
-    aori.legend()
+    ori.plot(x, y, z, label='ori path')
+    ori.legend()
 
     lgHandler=LGHandler()
     trans1=np.array([0.4183, -0.4920, 1.6849])
@@ -101,8 +113,17 @@ if __name__=="__main__":
     quat2=[0.5802,-0.8137, 0.0347, -0.0043]
     a=lgHandler.SetSE3(trans1,quat1)
     b=lgHandler.SetSE3(trans2,quat2)
-    newx,newy,newz=lgHandler.Interpolate(a,b)
-    ax = fig.gca(projection='3d')
-    ax.plot(newx, newy, newz, label='SLAM curve')
-    ax.legend()
+
+    newx,newy,newz=lgHandler.Interpolate(a,b,LGroup.SE3)
+    se3Curve = fig.gca(projection='3d')
+    se3Curve.plot(newx, newy, newz, label='SLAM SE3 curve')
+    se3Curve.legend()
+
+
+    # c=lgHandler.SetSO3(quat1)
+    # d=lgHandler.SetSO3(quat2)
+    # newx,newy,newz=lgHandler.Interpolate(c,d,LGroup.SO3)
+    # so3Curve = fig2.gca(projection='3d')
+    # so3Curve.plot(newx, newy, newz, label='SLAM SO3 curve')
+    # so3Curve.legend()
     plt.show()
