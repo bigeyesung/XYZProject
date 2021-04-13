@@ -19,8 +19,8 @@ Q3
     3-2:
         In LandmarkSLAM class, it has "GetOverlap", "GetOverlap_v2"  and "GetOverlap_v3" functions.
         The former is the current one working solution. but it has O(N**3) time complexity.
-        Thus, the later two are the improved versions. These versions are still buggy but I think given 
-        we have threed sorted arrays, it definitely needs to improve the algorithm. The further explnation is 
+        Thus, the later two are the improved versions. These versions are still buggy and need to be refactered.
+        But I think given we have threed sorted arrays, it definitely needs to improve the algorithm. The further explnation is 
         on the comments. 
 
 Q4
