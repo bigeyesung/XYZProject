@@ -20,8 +20,15 @@ class Property(Enum):
 
 class PropData(Enum):
     AVEFEATURE=5.48
+    MINFEATURE=5
+    MAXFEATURE=10
     AVEMATCH=51.2
     ACCRANGE=5
+    MAXSIZE=5
+
+class Index(Enum):
+    FIRST=0
+    LAST=-1
 
 class Simulate():
     def __init__(self):
@@ -41,6 +48,7 @@ class Simulate():
         except:
             print("file can't be opened")
             return False
+
     def GetData(self, sec):
         #trans(x,y,z)
         trans=[self.dataset[sec][CoordData.TIME.value],self.dataset[sec][CoordData.X.value],self.dataset[sec][CoordData.Y.value],self.dataset[sec][CoordData.Z.value]]
@@ -54,22 +62,14 @@ class Simulate():
 
 class MetricSLAM():
     def __init__(self):
-        # self.camera = np.array([[1,0,0,0],
-        #                         [0,1,0,0],
-        #                         [0,0,1,0],
-        #                         [0,0,0,1]
-        #                         ])
         self.curPos=[0,0,0]
         self.traversed=0
-        self.maxSizeMem=5
-        self.minFeature=5
-        self.maxFeature=10
+        # self.maxSizeMem=5
+        # self.minFeature=5
+        # self.maxFeature=10
         self.features=[]
-        # self.featuresTotal=0
         self.matches=[]
         self.totals=[0,0]
-        # self.matchesTotal=0
-        #limit memory-> using queue
 
     def Run(self,tran,quat,featureNums,matches):
         traversed=self.GetTraversed(tran)
@@ -85,9 +85,9 @@ class MetricSLAM():
         return traversed, aveFeatures, aveMatches
 
     def GetWarning(self, aveFeatures):
-        if aveFeatures<=self.minFeature:
+        if aveFeatures<=PropData.MINFEATURE.value:
             print("suggesting poor lighting conditions")
-        elif aveFeatures>=self.maxFeature:
+        elif aveFeatures>=PropData.MAXFEATURE.value:
             print("suggesting over exposure")
 
     def GetTraversed(self, trans):
@@ -98,60 +98,23 @@ class MetricSLAM():
         self.curPos=trans[1:]
         return self.traversed
 
-    # def GetCurPos2(self, trans):
-    #     deltaX=trans[CoordData.X.value]-self.camera[0][3]
-    #     deltaY=trans[CoordData.Y.value]-self.camera[1][3]
-    #     deltaZ=trans[CoordData.Z.value]-self.camera[2][3]
-    #     transMat = np.array([[1,0,0,deltaX],
-    #                          [0,1,0,deltaY],
-    #                          [0,0,1,deltaZ],
-    #                          [0,0,0,1]
-    #                         ])
-    #     self.camera=np.matmul(transMat,self.camera)
-
     def GetAveProperty(self, property, newData):
         container=self.features
-        # totalVal=self.totals[Property.FEATURE.value]
-
         if property==Property.MATCH.value:
             container=self.matches
             self.totals[property]=self.totals[Property.MATCH.value]
 
-        if len(container)<self.maxSizeMem:
+        if len(container)<PropData.MAXSIZE.value:
             container.append(newData)
             self.totals[property]+=newData
             return self.totals[property]/len(container)
-        #if size == max mem -> remoeve the head, recalculate 
+
+        #if size == max mem -> remove the head, and add new data
         else:
             self.totals[property]=self.totals[property]-container[0]+newData
             container.pop(0)
             container.append(newData)
-            return self.totals[property]/self.maxSizeMem
-
-
-    # def GetAveFeatures(self, featureNums):
-    #     if len(self.features)<self.maxSizeMem:
-    #         self.features.append(featureNums)
-    #         self.featuresTotal+=featureNums
-    #         return self.featuresTotal/len(self.features)
-    #     #if size == max mem -> remoeve the head, recalculate 
-    #     else:
-    #         self.featuresTotal=self.featuresTotal-self.features[0]+featureNums
-    #         self.features.pop(0)
-    #         self.features.append(featureNums)
-    #         return self.featuresTotal/self.maxSizeMem
-
-    # def GetAveMatches(self, matches):
-    #     if len(self.matches)<self.maxSizeMem:
-    #         self.matches.append(matches)
-    #         self.matchesTotal+=self.matches
-    #         return self.featuresTotal//len(self.matches)
-    #     #if size == max mem -> remoeve the head, recalculate 
-    #     else:
-    #         self.matchesTotal=self.matchesTotal-self.matches[0]+matches
-    #         self.matches.pop(0)
-    #         self.matches.append(matches)
-    #         return self.matchesTotal//self.maxSizeMem
+            return self.totals[property]/PropData.MAXSIZE.value
 
 class TopologicalSLAM(MetricSLAM):
     def __init__(self):
@@ -168,7 +131,6 @@ class TopologicalSLAM(MetricSLAM):
     def GetMaxAccConfidence(self):
         headIdx=0
         curRange=PropData.ACCRANGE.value-1
-
         curConf = sum(self.accConfidence[headIdx:PropData.ACCRANGE.value])
         maxConf = curConf
         for ind in range(1,len(self.accConfidence)-curRange):
@@ -177,8 +139,6 @@ class TopologicalSLAM(MetricSLAM):
                 print("curConf:",curConf)
                 headIdx=ind
                 maxConf=curConf
-        # print(headIdx)
-        # print(headIdx+curRange)
         if len(self.accConfidence)<PropData.ACCRANGE.value:
             tailIdx=len(self.accConfidence)-1
         else:
@@ -189,8 +149,8 @@ class TopologicalSLAM(MetricSLAM):
         return headIdx, tailIdx
 
 class LandmarkSLAM(MetricSLAM):
-    def __init__(self):
 
+    def __init__(self):
         MetricSLAM.__init__(self)
         self.module1=[]
         self.module2=[]
@@ -199,25 +159,36 @@ class LandmarkSLAM(MetricSLAM):
         self.minNum=0
 
     def GetOverlap(self):
-        minNum=0
-        maxNum=0
+        minNum, maxNum = 0, 0
         print("module1:",self.module1)
         print("module2:",self.module2)
         print("module3:",self.module3)
         if self.module1 and self.module2 and self.module3:
             minRange=self.maxNum-self.minNum
+            ranges=collections.defaultdict(list)
+            heap=[]
+            heapq.heapify(heap)
             for land1 in self.module1:
                 for land2 in self.module2:
                     for land3 in self.module3:
-                        visited=[land1,land2,land3]
-                        curRange=max(visited)-min(visited)
-                        # curRange=min(curRange,minRange)
+                        heapq.heappush(heap,land1)
+                        heapq.heappush(heap,land2)
+                        heapq.heappush(heap,land3)
+                        visited=[]
+                        while(heap):
+                            visited.append(heapq.heappop(heap))
+                        curRange=visited[Index.LAST.value]-visited[Index.FIRST.value]
                         if curRange<minRange:
-                            # print("curRange:",curRange)
-                            # print("minRange",minRange)
-                            minNum=min(visited)
-                            maxNum=max(visited)
+                            minNum=visited[Index.FIRST.value]
+                            maxNum=visited[Index.LAST.value]
                             minRange=curRange
+                            ranges[curRange].extend(visited)
+                        elif curRange==minRange:
+                            # curNum=ranges[curRange][Index.FIRST.value]
+                            if visited[Index.FIRST.value]<ranges[curRange][Index.FIRST.value]:
+                                ranges[curRange]=visited
+                                minNum=visited[Index.FIRST.value]
+                                maxNum=visited[Index.LAST.value]
             print("minRange:",minRange)
             print("minRange start:  %d end: %d" % (minNum, maxNum))
             return minNum, maxNum
@@ -239,8 +210,9 @@ class LandmarkSLAM(MetricSLAM):
             moduleIndex = {module1:0,module2:0,module3:0}
             ranges=collections.defaultdict(list)
             minRange=self.maxNum-self.minNum
+            heap=[]
+            heapq.heapify(heap)
             while(moduleIndex[module1]<len(module1) and moduleIndex[module2]<len(module2) and moduleIndex[module3]<len(module3)):
-                heap=[]
                 minNum, midNum, maxNum = 0, 0, 0
 
                 #get numbers(visited landmarks) from each module
@@ -251,7 +223,6 @@ class LandmarkSLAM(MetricSLAM):
 
                 #Sort the current vistied landmarks. 
                 #Using heap to avoid computation when data is too large(future)
-                heapq.heapify(heap)
                 heapq.heappush(heap,num1)
                 heapq.heappush(heap,num2)
                 heapq.heappush(heap,num3)
@@ -262,7 +233,7 @@ class LandmarkSLAM(MetricSLAM):
                 curRange=maxNum-minNum
                 # Check if two or more ranges have the same size-> choose smaller integers
                 if ranges.get(curRange)!=None:
-                    curNum=ranges[curRange][0]
+                    curNum=ranges[curRange][Index.FIRST.value]
                     if minNum<curNum:
                         ranges[curRange]=visited
                 else:
@@ -280,7 +251,61 @@ class LandmarkSLAM(MetricSLAM):
                 else:
                     moduleIndex[largeMod]+=1
             print("minRange:",minRange)
-            print("minRange start:  %d end: %d" % (ranges[minRange][0], ranges[minRange][2]))
+            print("minRange start:  %d end: %d" % (ranges[minRange][Index.FIRST.value], ranges[minRange][Index.LAST.value]))
+        else:
+            print("not enough visited landmarks")
+    def GetOverlap_v3(self):
+        #Given we have three sorted array, we extend them together to become one sorted array
+        #In this sorted array, using "sliding window" to find out current range of three numbers, and compare with min range.
+        #these three numbers must come from all modules.
+        if self.module1 and self.module2 and self.module3:
+            def IsValid(curArr):
+                mod1=0
+                mod2=0
+                mod3=0
+                for num in curArr:
+                    if num in module1:
+                        mod1+=1
+                    elif num in module2:
+                        mod2+=1
+                    else:
+                        mod3+=1
+                if mod1>0 and mod2>0 and mod3>0:
+                    return True
+                else:
+                    return False
+            arr=[]
+            module1=set(self.module1)
+            module2=set(self.module2)
+            module3=set(self.module3)
+            arr.extend(self.module1)
+            arr.extend(self.module2)
+            arr.extend(self.module3)
+            arr.sort()
+            curRange=0
+            minRange=arr[-1]-arr[0]
+            table = collections.defaultdict(list)
+            curArr=[arr[0],arr[1],arr[2]]
+            for ind in range(3,len(arr)-2):
+                curArr.append(arr[ind])
+                #check current is vali: all modules get involved
+                if IsValid(curArr) and len(curArr)>=3:
+                    #check range:
+                    curRange=curArr[-1]-curArr[0]
+                    if curRange<=minRange:
+                        table[curRange].extend(curArr)
+                        minRange=curRange
+                    #pop first num
+                    curArr.pop(0)
+                    #check rest is valid 
+                    if IsValid(curArr) and len(curArr)>=3:
+                        curRange=curArr[-1]-curArr[0]
+                        if curRange<=minRange:
+                            table[curRange].extend(curArr)
+                            minRange=curRange
+            # print(table)  
+            print("minRange:",minRange)
+            print("minRange start:  %d end: %d" % (table[minRange][Index.FIRST.value], table[minRange][Index.LAST.value]))
         else:
             print("not enough visited landmarks")
 
@@ -291,24 +316,27 @@ class LandmarkSLAM(MetricSLAM):
         self.module3.clear()
 
         #given a random number
+        #Assuming the data is unique in each module and in increasing order
         marksSet=set(np.random.randint(100, size=(10)))
         marksArr=list(marksSet)
         marksArr.sort()
         if len(marksArr)!=0:
-            self.maxNum=marksArr[-1]
-            self.minNum=marksArr[0]
+            self.maxNum=marksArr[Index.LAST.value]
+            self.minNum=marksArr[Index.FIRST.value]
             while marksArr:
-                self.module1.append(marksArr.pop(0))
+                self.module1.append(marksArr.pop(Index.FIRST.value))
                 if marksArr:
-                    self.module2.append(marksArr.pop(0))
+                    self.module2.append(marksArr.pop(Index.FIRST.value))
                 if marksArr:
-                    self.module3.append(marksArr.pop(0))
+                    self.module3.append(marksArr.pop(Index.FIRST.value))
 
+        #buggy test data
         # self.module1= [1, 11, 67, 88]
         # self.module2= [6, 55, 70]
         # self.module3= [9, 58, 74]
         # self.maxNum=88
         # self.minNum=1
+
 
 
 if __name__=="__main__":
@@ -335,7 +363,9 @@ if __name__=="__main__":
             traversed, aveFeatures, aveMatches = landslam.Run(tran,quat,featureNums,matches)
             landslam.SetLandmarks()
             landslam.GetOverlap()
+
             #test function
             landslam.GetOverlap_v2()
+            landslam.GetOverlap_v3()
             sec+=1
 

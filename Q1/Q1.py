@@ -1,32 +1,27 @@
-#assuming we have the same car lengths for each row
-#assuming entrace(empty space) must be on either side of our going path
-#we can't go in front or back of the cars
-
 #Input: 2D array
 #Output: integer
 #Corner case: empty 2D array
 #Corner case: we have only 1 car in each row
-from enum import Enum
 
+from enum import Enum
 class Space(Enum):
     EMPTY="O"
     BLOCK="X"
 
 class Cross():
     def Start(self, cars):
-        #if not cars
+        #if no cars, return
         if not cars:
+            return 0
+
+        # For each row, at least we need 2 cars to go through
+        if len(cars[0])<2:
             return 0
 
         pathRows = len(cars)
         pathCols = sum(cars[0])+1
-        # For each row, at least we need 2 cars to go through
-        if len(cars[0])<2:
-            return 0
-        
         paths = []
         minNum=float("inf")
-
 
         #create a path array
         for rol in range(pathRows):
