@@ -64,9 +64,6 @@ class MetricSLAM():
     def __init__(self):
         self.curPos=[0,0,0]
         self.traversed=0
-        # self.maxSizeMem=5
-        # self.minFeature=5
-        # self.maxFeature=10
         self.features=[]
         self.matches=[]
         self.totals=[0,0]

@@ -1,0 +1,46 @@
+#I am using python3.6 in Linux and Conda env.
+
+Q1
+    1-1:
+        I use 2 assumptions in this question, but it definitely can do improvement.
+            #Assuming we have the same car lengths for each row
+            #Assuming entrace(empty space) must be on either side of our walk path
+    1-2:
+        #Input: 2D array
+        #Output: integer
+        #Corner case: empty 2D array
+        #Corner case: we have only 1 car in each row
+
+Q2
+    I found a solution regarding M==N, it is listed on the comments.
+Q3
+    3-1:
+        #Assuming each visited landmark only exists once. 
+    3-2:
+        In LandmarkSLAM class, it has "GetOverlap", "GetOverlap_v2"  and "GetOverlap_v3" functions.
+        The former is the current one working solution. but it has O(N**3) time complexity.
+        Thus, the later two are the improved versions. These versions are still buggy but I think given 
+        we have threed sorted arrays, it definitely needs to improve the algorithm. The further explnation is 
+        on the comments. 
+
+Q4
+    4-1:
+    Required libraries:
+    #conda install pybind11 pybind11-abi pybind11-global
+    #pip install sophuspy
+
+    4-2:Other interpolation:
+        if the data is only two-dimensional(x,y):
+            First idea came to my mind is to try natural exponent, log, or sin/cos functions. interpolating withion the range.
+            Given we have N+1 points, we can use Lagrange,Newton polynomial or Taylor series to find N polynomial. Interpolating withion the range.
+        if the data is three-dimensional (x,y,z):
+            We can use Bezier curves, Hermite curves, or splines interpolation. E.g. Catmull-Rom spline interpolation
+            In Python, we can refer scipy package.
+            https://docs.scipy.org/doc/scipy/reference/interpolate.html
+            Further, I found one paper mentions affine interpolation for Lie Group. It says not only interpolate in 0<=t<=1, also
+            in can use in t>1 or t<0. Definitely it needs further investigation.
+            https://www.sci-hub.se/10.1145/3306346.3322997
+Q5
+    I attached a picture. Let me know if it is not clear.
+
+

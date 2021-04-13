@@ -79,7 +79,6 @@ class LGHandler():
 if __name__=="__main__":
     mpl.rcParams['legend.fontsize'] = 10
     fig = plt.figure()
-    # fig2 = plt.figure()
 
     #set ori path
     ori = fig.gca(projection='3d')
@@ -106,8 +105,4 @@ if __name__=="__main__":
 
     # c=lgHandler.SetSO3(quat1)
     # d=lgHandler.SetSO3(quat2)
-    # newx,newy,newz=lgHandler.Interpolate(c,d,LGroup.SO3)
-    # so3Curve = fig2.gca(projection='3d')
-    # so3Curve.plot(newx, newy, newz, label='SLAM SO3 curve')
-    # so3Curve.legend()
     plt.show()
