@@ -188,6 +188,7 @@ class LandmarkSLAM(MetricSLAM):
                                 maxNum=visited[Index.LAST.value]
             print("minRange:",minRange)
             print("minRange start:  %d end: %d" % (minNum, maxNum))
+            print("===GetOverlap end===")
             return minNum, maxNum
         else:
             print("not enough visited landmarks")
@@ -249,6 +250,7 @@ class LandmarkSLAM(MetricSLAM):
                     moduleIndex[largeMod]+=1
             print("minRange:",minRange)
             print("minRange start:  %d end: %d" % (ranges[minRange][Index.FIRST.value], ranges[minRange][Index.LAST.value]))
+            print("===GetOverlap_v2 end===")
         else:
             print("not enough visited landmarks")
     def GetOverlap_v3(self):
@@ -303,6 +305,7 @@ class LandmarkSLAM(MetricSLAM):
             # print(table)  
             print("minRange:",minRange)
             print("minRange start:  %d end: %d" % (table[minRange][Index.FIRST.value], table[minRange][Index.LAST.value]))
+            print("===GetOverlap_v3 end===")
         else:
             print("not enough visited landmarks")
 
